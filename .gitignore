@@ -1,6 +1,7 @@
 # VSCode
 .vscode/
 
+
 #################
 ## Eclipse
 #################
@@ -233,3 +234,4 @@ gurux.dlms.server.example.java/data.csv
 *.zip
 gurux.dlms.xmlClient/trace.txt
 gurux.dlms.xmlClient/logFile.txt
+dependency-reduced-pom.xml
