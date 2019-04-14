@@ -999,7 +999,7 @@ public class GXDLMSSettings {
     /*
      * @param value Frame check is skipped for some unit tests.
      */
-    final void setSkipFrameCheck(final boolean value) {
+    public final void setSkipFrameCheck(final boolean value) {
         skipFrameCheck = value;
     }
 
