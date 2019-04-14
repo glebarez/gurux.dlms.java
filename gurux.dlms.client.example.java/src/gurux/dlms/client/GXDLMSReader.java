@@ -73,6 +73,7 @@ import gurux.dlms.objects.GXDLMSObjectCollection;
 import gurux.dlms.objects.GXDLMSProfileGeneric;
 import gurux.dlms.objects.GXDLMSRegister;
 import gurux.dlms.objects.IGXDLMSBase;
+import gurux.dlms.secure.GXDLMSSecureClient;
 import gurux.io.BaudRate;
 import gurux.io.Parity;
 import gurux.io.StopBits;
@@ -85,7 +86,7 @@ public class GXDLMSReader {
     GXDLMSClient dlms;
     boolean iec;
     java.nio.ByteBuffer replyBuff;
-    int WaitTime = 60000;
+    int WaitTime = 5000;
     final PrintWriter logFile;
 
     /*
@@ -116,18 +117,26 @@ public class GXDLMSReader {
         }
     }
 
-    void close() throws Exception {
+    public void close() throws Exception {
+        close(true,true);
+    }
+
+    public void close(Boolean close_media, Boolean send_release) throws Exception {
         if (Media != null && Media.isOpen()) {
             System.out.println("DisconnectRequest");
             GXReplyData reply = new GXReplyData();
-            try {
-                readDataBlock(dlms.releaseRequest(), reply);
-            } catch (Exception e) {
-                // All meters don't support release.
+            if (send_release) {
+                try {
+                    readDataBlock(dlms.releaseRequest(), reply);
+                } catch (Exception e) {
+                    // All meters don't support release.
+                }
             }
             reply.clear();
             readDLMSPacket(dlms.disconnectRequest(), reply);
-            Media.close();
+            if (close_media) {
+                Media.close();
+            }
         }
     }
 
@@ -202,6 +211,13 @@ public class GXDLMSReader {
         if (!reply.getStreaming() && (data == null || data.length == 0)) {
             return;
         }
+
+        // -- auto increase invocation counter
+        if (dlms instanceof GXDLMSSecureClient) {
+            GXDLMSSecureClient sc = (GXDLMSSecureClient) dlms;
+            sc.getCiphering().setInvocationCounter(sc.getCiphering().getInvocationCounter()+1);
+        }
+
         GXReplyData notify = new GXReplyData();
         reply.setError((short) 0);
         Object eop = (byte) 0x7E;
@@ -337,7 +353,12 @@ public class GXDLMSReader {
      * @throws InterruptedException
      * @throws Exception
      */
-    void initializeConnection() throws Exception, InterruptedException {
+
+    public void initializeConnection() throws Exception, InterruptedException {
+         initializeConnection(true);
+    }
+
+    public void initializeConnection(Boolean send_aarq) throws Exception, InterruptedException {
         if (Media instanceof GXSerial) {
             GXSerial serial = (GXSerial) Media;
             serial.setDtrEnable(true);
@@ -462,18 +483,20 @@ public class GXDLMSReader {
             replyBuff = java.nio.ByteBuffer.allocate(size);
         }
         reply.clear();
-        readDataBlock(dlms.aarqRequest(), reply);
-        // Parse reply.
-        dlms.parseAareResponse(reply.getData());
-        reply.clear();
+        if (send_aarq) {
+            readDataBlock(dlms.aarqRequest(), reply);
+            // Parse reply.
+            dlms.parseAareResponse(reply.getData());
+            reply.clear();
 
-        // Get challenge Is HLS authentication is used.
-        if (dlms.getAuthentication().getValue() > Authentication.LOW
-                .getValue()) {
-            for (byte[] it : dlms.getApplicationAssociationRequest()) {
-                readDLMSPacket(it, reply);
+            // Get challenge Is HLS authentication is used.
+            if (dlms.getAuthentication().getValue() > Authentication.LOW
+                    .getValue()) {
+                for (byte[] it : dlms.getApplicationAssociationRequest()) {
+                    readDLMSPacket(it, reply);
+                }
+                dlms.parseApplicationAssociationResponse(reply.getData());
             }
-            dlms.parseApplicationAssociationResponse(reply.getData());
         }
     }
 
