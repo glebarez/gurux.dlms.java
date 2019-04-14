@@ -602,10 +602,17 @@ public class GXDLMSReader {
      * @return
      * @throws Exception
      */
-    public Object[] readRowsByRange(final GXDLMSProfileGeneric pg,
-            final Date start, final Date end) throws Exception {
+
+    // original version
+    public Object[] readRowsByRange(final GXDLMSProfileGeneric pg, final Date start, final Date end) throws Exception {
+    return readRowsByRange(pg, start, end, null);
+    }
+
+    // extended version with <columns> parameter
+    public Object[] readRowsByRange(final GXDLMSProfileGeneric pg, final Date start, final Date end,
+        final List<Entry<GXDLMSObject, GXDLMSCaptureObject>> columns) throws Exception {
         GXReplyData reply = new GXReplyData();
-        byte[][] data = dlms.readRowsByRange(pg, start, end);
+        byte[][] data = dlms.readRowsByRange(pg, start, end, columns);
         readDataBlock(data, reply);
         return (Object[]) dlms.updateValue(pg, 2, reply.getValue());
     }
