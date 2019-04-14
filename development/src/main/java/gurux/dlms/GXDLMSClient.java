@@ -162,7 +162,7 @@ public class GXDLMSClient {
     /**
      * @return Get settings.
      */
-    final GXDLMSSettings getSettings() {
+    public final GXDLMSSettings getSettings() {
         return settings;
     }
 
