@@ -592,6 +592,13 @@ public class GXDLMSReader {
         return (Object[]) dlms.updateValue(pg, 2, reply.getValue());
     }
 
+    public Object[] readRowsByEntry(GXDLMSProfileGeneric pg, int index, int count, int columnStart, int columEnd) throws Exception {
+        byte[][] data = dlms.readRowsByEntry(pg, index, count, columnStart, columEnd);
+        GXReplyData reply = new GXReplyData();
+        readDataBlock(data, reply);
+        return (Object[]) dlms.updateValue(pg, 2, reply.getValue());
+    }
+
     /**
      * Read Profile Generic's data by range (start and end time).
      * 
