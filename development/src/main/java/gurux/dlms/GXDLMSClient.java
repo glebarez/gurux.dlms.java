@@ -2054,14 +2054,9 @@ public class GXDLMSClient {
             DataType index_data_type) throws Exception {
                 
         settings.resetBlockIndex();
-        // GXDateTime s = GXCommon.getDateTime(start);
-        // GXDateTime e = GXCommon.getDateTime(end);
-        // s.getSkip().add(DateTimeSkips.DAY_OF_WEEK);
-        // e.getSkip().add(DateTimeSkips.DAY_OF_WEEK);
-
-        GXDLMSObject sort = pg.getSortObject();
 
         // If sort object is not found or it is not clock object read all.
+        GXDLMSObject sort = pg.getSortObject();
         if (sort == null ) {
             return read(pg, 2);
         } else if (sort.getObjectType() == ObjectType.CLOCK) {
@@ -2090,21 +2085,10 @@ public class GXDLMSClient {
         // Add version
         GXCommon.setData(buff, DataType.UINT16, sort.getVersion());
 
-        // If Unix time is used.
-        // if (pg.getCaptureObjects().size() != 0
-        //         && pg.getCaptureObjects().get(0).getKey() instanceof GXDLMSData
-        //         && pg.getCaptureObjects().get(0).getKey().getLogicalName()
-        //                 .equals("0.0.1.1.0.255")) {
-            // Add start index
-            GXCommon.setData(buff, index_data_type, start);
-            // Add end index
-            GXCommon.setData(buff, index_data_type, end);
-        // } else {
-        //     // Add start time
-        //     GXCommon.setData(buff, DataType.OCTET_STRING, s);
-        //     // Add end time
-        //     GXCommon.setData(buff, DataType.OCTET_STRING, e);
-        // }
+        // Add start index
+        GXCommon.setData(buff, index_data_type, start);
+        // Add end index
+        GXCommon.setData(buff, index_data_type, end);
 
         // Add array of read columns.
         buff.setUInt8(DataType.ARRAY.getValue());
