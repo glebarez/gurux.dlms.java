@@ -614,7 +614,7 @@ public class GXDLMSReader {
     public Object[] readRowsByGenericRange(GXDLMSProfileGeneric pg, Object start, Object end, DataType index_data_type)
     throws Exception {
         GXReplyData reply = new GXReplyData();
-        byte[][] data = dlms.readByIntRange(pg, start, end, null, index_data_type);
+        byte[][] data = dlms.readByGenericRange(pg, start, end, null, index_data_type);
         readDataBlock(data, reply);
         return (Object[]) dlms.updateValue(pg, 2, reply.getValue());
 }
