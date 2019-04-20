@@ -592,13 +592,6 @@ public class GXDLMSReader {
         return (Object[]) dlms.updateValue(pg, 2, reply.getValue());
     }
 
-    public Object[] readRowsByEntry(GXDLMSProfileGeneric pg, int index, int count, int columnStart, int columEnd) throws Exception {
-        byte[][] data = dlms.readRowsByEntry(pg, index, count, columnStart, columEnd);
-        GXReplyData reply = new GXReplyData();
-        readDataBlock(data, reply);
-        return (Object[]) dlms.updateValue(pg, 2, reply.getValue());
-    }
-
     /**
      * Read Profile Generic's data by range (start and end time).
      * 
@@ -609,20 +602,22 @@ public class GXDLMSReader {
      * @return
      * @throws Exception
      */
-
-    // original version
-    public Object[] readRowsByRange(final GXDLMSProfileGeneric pg, final Date start, final Date end) throws Exception {
-    return readRowsByRange(pg, start, end, null);
-    }
-
-    // extended version with <columns> parameter
-    public Object[] readRowsByRange(final GXDLMSProfileGeneric pg, final Date start, final Date end,
-        final List<Entry<GXDLMSObject, GXDLMSCaptureObject>> columns) throws Exception {
+    public Object[] readRowsByRange(final GXDLMSProfileGeneric pg,
+            final Date start, final Date end) throws Exception {
         GXReplyData reply = new GXReplyData();
-        byte[][] data = dlms.readRowsByRange(pg, start, end, columns);
+        byte[][] data = dlms.readRowsByRange(pg, start, end);
         readDataBlock(data, reply);
         return (Object[]) dlms.updateValue(pg, 2, reply.getValue());
     }
+
+    // read rows by int-typed range object
+    public Object[] readRowsByIntRange(GXDLMSProfileGeneric pg, Object start, Object end, DataType index_data_type)
+    throws Exception {
+        GXReplyData reply = new GXReplyData();
+        byte[][] data = dlms.readByIntRange(pg, start, end, null, index_data_type);
+        readDataBlock(data, reply);
+        return (Object[]) dlms.updateValue(pg, 2, reply.getValue());
+}
 
     /*
      * Read Scalers and units from the register objects.

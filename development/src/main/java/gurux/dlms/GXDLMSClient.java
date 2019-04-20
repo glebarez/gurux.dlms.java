@@ -2042,6 +2042,98 @@ public class GXDLMSClient {
         return read(pg.getName(), ObjectType.PROFILE_GENERIC, 2, buff);
     }
 
+
+    /**
+     * Read rows by integer-typed range NOTE: This differs from ReadByEntry, but
+     * uses mechanics similar to Date-typed range
+     * 
+     * @throws Exception
+     */
+    public byte[][] readByIntRange(final GXDLMSProfileGeneric pg, Object start, Object end,
+            final List<Entry<GXDLMSObject, GXDLMSCaptureObject>> columns,
+            DataType index_data_type) throws Exception {
+                
+        settings.resetBlockIndex();
+        // GXDateTime s = GXCommon.getDateTime(start);
+        // GXDateTime e = GXCommon.getDateTime(end);
+        // s.getSkip().add(DateTimeSkips.DAY_OF_WEEK);
+        // e.getSkip().add(DateTimeSkips.DAY_OF_WEEK);
+
+        GXDLMSObject sort = pg.getSortObject();
+
+        // If sort object is not found or it is not clock object read all.
+        if (sort == null ) {
+            return read(pg, 2);
+        } else if (sort.getObjectType() == ObjectType.CLOCK) {
+            throw new Exception("Sort object type must not be CLOCK");
+        }
+
+        GXByteBuffer buff = new GXByteBuffer(51);
+        // Add AccessSelector value.
+        buff.setUInt8(0x01);
+        // Add enum tag.
+        buff.setUInt8(DataType.STRUCTURE.getValue());
+        // Add item count
+        buff.setUInt8(0x04);
+        // Add enum tag.
+        buff.setUInt8(DataType.STRUCTURE.getValue());
+        // Add item count
+        buff.setUInt8(0x04);
+        // CI
+        GXCommon.setData(buff, DataType.UINT16,
+                sort.getObjectType().getValue());
+        // LN
+        GXCommon.setData(buff, DataType.OCTET_STRING,
+                GXCommon.logicalNameToBytes(sort.getLogicalName()));
+        // Add attribute index.
+        GXCommon.setData(buff, DataType.INT8, 2);
+        // Add version
+        GXCommon.setData(buff, DataType.UINT16, sort.getVersion());
+
+        // If Unix time is used.
+        // if (pg.getCaptureObjects().size() != 0
+        //         && pg.getCaptureObjects().get(0).getKey() instanceof GXDLMSData
+        //         && pg.getCaptureObjects().get(0).getKey().getLogicalName()
+        //                 .equals("0.0.1.1.0.255")) {
+            // Add start index
+            GXCommon.setData(buff, index_data_type, start);
+            // Add end index
+            GXCommon.setData(buff, index_data_type, end);
+        // } else {
+        //     // Add start time
+        //     GXCommon.setData(buff, DataType.OCTET_STRING, s);
+        //     // Add end time
+        //     GXCommon.setData(buff, DataType.OCTET_STRING, e);
+        // }
+
+        // Add array of read columns.
+        buff.setUInt8(DataType.ARRAY.getValue());
+        if (columns == null) {
+            // Add item count
+            buff.setUInt8(0x00);
+        } else {
+            GXCommon.setObjectCount(columns.size(), buff);
+            for (Entry<GXDLMSObject, GXDLMSCaptureObject> it : columns) {
+                buff.setUInt8(DataType.STRUCTURE.getValue());
+                // Add items count.
+                buff.setUInt8(4);
+                // CI
+                GXCommon.setData(buff, DataType.UINT16,
+                        it.getKey().getObjectType().getValue());
+                // LN
+                GXCommon.setData(buff, DataType.OCTET_STRING, GXCommon
+                        .logicalNameToBytes(it.getKey().getLogicalName()));
+                // Add attribute index.
+                GXCommon.setData(buff, DataType.INT8,
+                        it.getValue().getAttributeIndex());
+                // Add data index.
+                GXCommon.setData(buff, DataType.INT16,
+                        it.getValue().getDataIndex());
+            }
+        }
+        return read(pg.getName(), ObjectType.PROFILE_GENERIC, 2, buff);
+    }
+
     /**
      * Create object by object type.
      * 
