@@ -610,11 +610,11 @@ public class GXDLMSReader {
         return (Object[]) dlms.updateValue(pg, 2, reply.getValue());
     }
 
-    // read rows by int-typed range object
-    public Object[] readRowsByGenericRange(GXDLMSProfileGeneric pg, Object start, Object end, DataType index_data_type)
+    // read rows by generic typed range object
+    public Object[] readRowsByGenericRange(GXDLMSProfileGeneric pg, Object start, Object end)
     throws Exception {
         GXReplyData reply = new GXReplyData();
-        byte[][] data = dlms.readByGenericRange(pg, start, end, null, index_data_type);
+        byte[][] data = dlms.readByGenericRange(pg, start, end);
         readDataBlock(data, reply);
         return (Object[]) dlms.updateValue(pg, 2, reply.getValue());
 }

@@ -2048,72 +2048,46 @@ public class GXDLMSClient {
      * e.g. not by CLOCK object, but ny some event counter, etc 
      * @throws Exception
      */
-    public byte[][] readByGenericRange(final GXDLMSProfileGeneric pg, Object start, Object end,
-            final List<Entry<GXDLMSObject, GXDLMSCaptureObject>> columns,
-            DataType index_data_type) throws Exception {
-                
-        settings.resetBlockIndex();
-
-        // If sort object is not found or it is not clock object read all.
+    public byte[][] readByGenericRange(final GXDLMSProfileGeneric pg, Object start, Object end) throws Exception {
+        // -- check if PG object is set correctly
         GXDLMSObject sort = pg.getSortObject();
         if (sort == null ) {
-            return read(pg, 2);
-        } else if (sort.getObjectType() == ObjectType.CLOCK) {
+            throw new Exception("No sort object");
+        }
+        if (sort.getObjectType() == ObjectType.CLOCK) {
             throw new Exception("Sort object type must not be CLOCK");
         }
-
-        GXByteBuffer buff = new GXByteBuffer(51);
-        // Add AccessSelector value.
-        buff.setUInt8(0x01);
-        // Add enum tag.
-        buff.setUInt8(DataType.STRUCTURE.getValue());
-        // Add item count
-        buff.setUInt8(0x04);
-        // Add enum tag.
-        buff.setUInt8(DataType.STRUCTURE.getValue());
-        // Add item count
-        buff.setUInt8(0x04);
-        // CI
-        GXCommon.setData(buff, DataType.UINT16,
-                sort.getObjectType().getValue());
-        // LN
-        GXCommon.setData(buff, DataType.OCTET_STRING,
-                GXCommon.logicalNameToBytes(sort.getLogicalName()));
-        // Add attribute index.
-        GXCommon.setData(buff, DataType.INT8, 2);
-        // Add version
-        GXCommon.setData(buff, DataType.UINT16, sort.getVersion());
-
-        // Add start index
-        GXCommon.setData(buff, index_data_type, start);
-        // Add end index
-        GXCommon.setData(buff, index_data_type, end);
-
-        // Add array of read columns.
-        buff.setUInt8(DataType.ARRAY.getValue());
-        if (columns == null) {
-            // Add item count
-            buff.setUInt8(0x00);
-        } else {
-            GXCommon.setObjectCount(columns.size(), buff);
-            for (Entry<GXDLMSObject, GXDLMSCaptureObject> it : columns) {
-                buff.setUInt8(DataType.STRUCTURE.getValue());
-                // Add items count.
-                buff.setUInt8(4);
-                // CI
-                GXCommon.setData(buff, DataType.UINT16,
-                        it.getKey().getObjectType().getValue());
-                // LN
-                GXCommon.setData(buff, DataType.OCTET_STRING, GXCommon
-                        .logicalNameToBytes(it.getKey().getLogicalName()));
-                // Add attribute index.
-                GXCommon.setData(buff, DataType.INT8,
-                        it.getValue().getAttributeIndex());
-                // Add data index.
-                GXCommon.setData(buff, DataType.INT16,
-                        it.getValue().getDataIndex());
-            }
+        if (sort.getDataType(2) == DataType.NONE) {
+            throw new Exception("Sort object has NONE type");
         }
+
+        // --read PG by range
+        // init buffer
+        settings.resetBlockIndex();
+        GXByteBuffer buff = new GXByteBuffer(51);
+        
+        // set selector structure
+        buff.setUInt8(0x01);                            // Add AccessSelector value.
+        buff.setUInt8(DataType.STRUCTURE.getValue());   // Add enum tag.
+        buff.setUInt8(0x04);                            // Add item count
+        buff.setUInt8(DataType.STRUCTURE.getValue());   // Add enum tag.
+        buff.setUInt8(0x04);                            // Add item count
+
+        // selector object
+        GXCommon.setData(buff, DataType.UINT16, sort.getObjectType().getValue());                           // CI
+        GXCommon.setData(buff, DataType.OCTET_STRING, GXCommon.logicalNameToBytes(sort.getLogicalName()));  // LN
+        GXCommon.setData(buff, DataType.INT8, 2);                                                           // Add attribute index.
+        GXCommon.setData(buff, DataType.UINT16, sort.getVersion());                                         // Add version
+
+        // start, end indexes
+        GXCommon.setData(buff, sort.getDataType(2), start);
+        GXCommon.setData(buff, sort.getDataType(2), end);
+
+        // columns are not implemented, add empty array
+        buff.setUInt8(DataType.ARRAY.getValue());
+        buff.setUInt8(0x00); // item count
+        
+        // read
         return read(pg.getName(), ObjectType.PROFILE_GENERIC, 2, buff);
     }
 
