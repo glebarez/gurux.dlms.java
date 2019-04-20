@@ -611,7 +611,7 @@ public class GXDLMSReader {
     }
 
     // read rows by int-typed range object
-    public Object[] readRowsByIntRange(GXDLMSProfileGeneric pg, Object start, Object end, DataType index_data_type)
+    public Object[] readRowsByGenericRange(GXDLMSProfileGeneric pg, Object start, Object end, DataType index_data_type)
     throws Exception {
         GXReplyData reply = new GXReplyData();
         byte[][] data = dlms.readByIntRange(pg, start, end, null, index_data_type);

@@ -2044,12 +2044,11 @@ public class GXDLMSClient {
 
 
     /**
-     * Read rows by integer-typed range NOTE: This differs from ReadByEntry, but
-     * uses mechanics similar to Date-typed range
-     * 
+     * Read rows by Generic-typed Range
+     * e.g. not by CLOCK object, but ny some event counter, etc 
      * @throws Exception
      */
-    public byte[][] readByIntRange(final GXDLMSProfileGeneric pg, Object start, Object end,
+    public byte[][] readByGenericRange(final GXDLMSProfileGeneric pg, Object start, Object end,
             final List<Entry<GXDLMSObject, GXDLMSCaptureObject>> columns,
             DataType index_data_type) throws Exception {
                 
