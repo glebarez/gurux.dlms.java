@@ -1103,4 +1103,8 @@ public class GXDLMSProfileGeneric extends GXDLMSObject implements IGXDLMSBase {
     public final void postLoad(final GXXmlReader reader) {
     }
 
+    public void clearCaptureObjects() {
+        captureObjects.clear();
+    }
+
 }
