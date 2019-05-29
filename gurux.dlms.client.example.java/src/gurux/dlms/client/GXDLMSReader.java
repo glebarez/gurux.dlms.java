@@ -86,7 +86,7 @@ public class GXDLMSReader {
     GXDLMSClient dlms;
     boolean iec;
     java.nio.ByteBuffer replyBuff;
-    int WaitTime = 5000;
+    int WaitTime = 30000;
     final PrintWriter logFile;
 
     /*
