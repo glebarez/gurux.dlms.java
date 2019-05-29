@@ -2138,14 +2138,14 @@ public class GXDLMSClient {
         buff.setUInt8(0x04);                            // Add item count
 
         // selector object
-        GXCommon.setData(buff, DataType.UINT16, sort.getObjectType().getValue());                           // CI
-        GXCommon.setData(buff, DataType.OCTET_STRING, GXCommon.logicalNameToBytes(sort.getLogicalName()));  // LN
-        GXCommon.setData(buff, DataType.INT8, 2);                                                           // Add attribute index.
-        GXCommon.setData(buff, DataType.UINT16, sort.getVersion());                                         // Add version
+        GXCommon.setData(settings, buff, DataType.UINT16, sort.getObjectType().getValue());                           // CI
+        GXCommon.setData(settings, buff, DataType.OCTET_STRING, GXCommon.logicalNameToBytes(sort.getLogicalName()));  // LN
+        GXCommon.setData(settings, buff, DataType.INT8, 2);                                                           // Add attribute index.
+        GXCommon.setData(settings, buff, DataType.UINT16, sort.getVersion());                                         // Add version
 
         // start, end indexes
-        GXCommon.setData(buff, sort.getDataType(2), start);
-        GXCommon.setData(buff, sort.getDataType(2), end);
+        GXCommon.setData(settings, buff, sort.getDataType(2), start);
+        GXCommon.setData(settings, buff, sort.getDataType(2), end);
 
         // columns are not implemented, add empty array
         buff.setUInt8(DataType.ARRAY.getValue());
