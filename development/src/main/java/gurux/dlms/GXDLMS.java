@@ -26,7 +26,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 // See the GNU General Public License for more details.
 //
-// More information of Gurux products: http://www.gurux.org
+// More information of Gurux products: https://www.gurux.org
 //
 // This code is licensed under the GNU General Public License v2. 
 // Full text may be retrieved at http://www.gnu.org/licenses/gpl-2.0.txt
@@ -98,6 +98,7 @@ import gurux.dlms.objects.GXDLMSSecuritySetup;
 import gurux.dlms.objects.GXDLMSSpecialDaysTable;
 import gurux.dlms.objects.GXDLMSTcpUdpSetup;
 import gurux.dlms.objects.GXDLMSTokenGateway;
+import gurux.dlms.objects.GXDLMSUtilityTables;
 import gurux.dlms.objects.enums.CertificateType;
 import gurux.dlms.objects.enums.SecuritySuite;
 import gurux.dlms.secure.AesGcmParameter;
@@ -236,7 +237,7 @@ abstract class GXDLMS {
         case ZIG_BEE_SAS_APS_FRAGMENTATION:
             return new GXDLMSObject();
         case UTILITY_TABLES:
-            return new GXDLMSObject();
+            return new GXDLMSUtilityTables();
         case PUSH_SETUP:
             return new GXDLMSPushSetup();
         case MBUS_MASTER_PORT_SETUP:
@@ -412,12 +413,12 @@ abstract class GXDLMS {
             } else if (value instanceof String && tp == DataType.OCTET_STRING) {
                 DataType ui = obj.getUIDataType(index);
                 if (ui == DataType.STRING) {
-                    GXCommon.setData(bb, tp, ((String) value).getBytes());
+                    GXCommon.setData(null, bb, tp, ((String) value).getBytes());
                     return;
                 }
             }
         }
-        GXCommon.setData(bb, tp, value);
+        GXCommon.setData(null, bb, tp, value);
     }
 
     /**
@@ -630,7 +631,8 @@ abstract class GXDLMS {
                 } else {
                     // Data is send in octet string. Remove data type.
                     int pos = reply.size();
-                    GXCommon.setData(reply, DataType.OCTET_STRING, p.getTime());
+                    GXCommon.setData(null, reply, DataType.OCTET_STRING,
+                            p.getTime());
                     reply.move(pos + 1, pos, reply.size() - pos - 1);
                 }
                 multipleBlocks(p, reply, ciphering);
@@ -1098,7 +1100,9 @@ abstract class GXDLMS {
         AesGcmParameter s = new AesGcmParameter(cmd, cipher.getSecurity(),
                 cipher.getInvocationCounter(), cipher.getSystemTitle(), key,
                 cipher.getAuthenticationKey());
-        return GXCiphering.encrypt(s, data);
+        byte[] tmp = GXCiphering.encrypt(s, data);
+        cipher.setInvocationCounter(cipher.getInvocationCounter() + 1);
+        return tmp;
     }
 
     /**
@@ -1282,7 +1286,8 @@ abstract class GXDLMS {
             } else {
                 // Data is send in octet string. Remove data type.
                 int pos = reply.size();
-                GXCommon.setData(reply, DataType.OCTET_STRING, p.getTime());
+                GXCommon.setData(null, reply, DataType.OCTET_STRING,
+                        p.getTime());
                 reply.move(pos + 1, pos, reply.size() - pos - 1);
             }
             GXCommon.setObjectCount(p.getCount(), reply);
@@ -2348,7 +2353,7 @@ abstract class GXDLMS {
                             SingleReadResponse.DATA);
                     GXDataInfo di = new GXDataInfo();
                     di.setXml(reply.getXml());
-                    GXCommon.getData(reply.getData(), di);
+                    GXCommon.getData(settings, reply.getData(), di);
                     reply.getXml().appendEndTag(Command.READ_RESPONSE,
                             SingleReadResponse.DATA);
                     if (standardXml) {
@@ -2456,8 +2461,7 @@ abstract class GXDLMS {
             data.getXml().appendStartTag(Command.METHOD_RESPONSE);
             data.getXml().appendStartTag(Command.METHOD_RESPONSE, type);
             // InvokeIdAndPriority
-            data.getXml().appendLine(TranslatorTags.INVOKE_ID, "Value",
-                    data.getXml().integerToHex(invoke, 2));
+            data.getXml().appendInvokeId(invoke);
         }
         boolean standardXml = data.getXml() != null && data.getXml()
                 .getOutputType() == TranslatorOutputType.STANDARD_XML;
@@ -2522,7 +2526,7 @@ abstract class GXDLMS {
                                 SingleReadResponse.DATA);
                         GXDataInfo di = new GXDataInfo();
                         di.setXml(data.getXml());
-                        GXCommon.getData(data.getData(), di);
+                        GXCommon.getData(settings, data.getData(), di);
                         data.getXml().appendEndTag(Command.READ_RESPONSE,
                                 SingleReadResponse.DATA);
                     }
@@ -2633,7 +2637,7 @@ abstract class GXDLMS {
                 }
                 GXDataInfo di = new GXDataInfo();
                 di.setXml(reply.getXml());
-                GXCommon.getData(reply.getData(), di);
+                GXCommon.getData(settings, reply.getData(), di);
                 if (reply.getXml()
                         .getOutputType() == TranslatorOutputType.STANDARD_XML) {
                     reply.getXml().appendEndTag(Command.WRITE_REQUEST,
@@ -2706,7 +2710,8 @@ abstract class GXDLMS {
             }
             GXDataInfo info = new GXDataInfo();
             info.setType(dt);
-            Object ret = GXCommon.getData(new GXByteBuffer(tmp), info);
+            Object ret =
+                    GXCommon.getData(settings, new GXByteBuffer(tmp), info);
             reply.setTime(((GXDateTime) ret));
         }
         if (reply.getXml() != null) {
@@ -2722,7 +2727,7 @@ abstract class GXDLMS {
             reply.getXml().appendStartTag(TranslatorTags.DATA_VALUE);
             GXDataInfo di = new GXDataInfo();
             di.setXml(reply.getXml());
-            GXCommon.getData(reply.getData(), di);
+            GXCommon.getData(settings, reply.getData(), di);
             reply.getXml().appendEndTag(TranslatorTags.DATA_VALUE);
             reply.getXml().appendEndTag(TranslatorTags.NOTIFICATION_BODY);
             reply.getXml().appendEndTag(Command.DATA_NOTIFICATION);
@@ -2747,8 +2752,7 @@ abstract class GXDLMS {
             data.getXml().appendStartTag(Command.SET_RESPONSE);
             data.getXml().appendStartTag(Command.SET_RESPONSE, type);
             // InvokeIdAndPriority
-            data.getXml().appendLine(TranslatorTags.INVOKE_ID, "Value",
-                    data.getXml().integerToHex(invokeId, 2));
+            data.getXml().appendInvokeId(invokeId);
         }
 
         // SetResponseNormal
@@ -2858,6 +2862,57 @@ abstract class GXDLMS {
      * @param index
      *            Block index number.
      */
+    static void handleGetResponseWithList(final GXDLMSSettings settings,
+            final GXReplyData reply) {
+        short ch = 0;
+        GXByteBuffer data = reply.getData();
+        // Get object count.
+        int cnt = GXCommon.getObjectCount(data);
+        Object[] values = new Object[cnt];
+        if (reply.getXml() != null) {
+            // Result start tag.
+            reply.getXml().appendStartTag(TranslatorTags.RESULT, "Qty",
+                    reply.getXml().integerToHex(cnt, 2));
+        }
+        for (int pos = 0; pos != cnt; ++pos) {
+            // Result
+            ch = data.getUInt8();
+            if (ch != 0) {
+                reply.setError(data.getUInt8());
+            } else {
+                if (reply.getXml() != null) {
+                    GXDataInfo di = new GXDataInfo();
+                    di.setXml(reply.getXml());
+                    // Data.
+                    reply.getXml().appendStartTag(Command.READ_RESPONSE,
+                            SingleReadResponse.DATA);
+                    GXCommon.getData(settings, reply.getData(), di);
+                    reply.getXml().appendEndTag(Command.READ_RESPONSE,
+                            SingleReadResponse.DATA);
+                } else {
+                    reply.setReadPosition(reply.getData().position());
+                    getValueFromData(settings, reply);
+                    reply.getData().position(reply.getReadPosition());
+                    if (values != null) {
+                        values[pos] = reply.getValue();
+                    }
+                    reply.setValue(null);
+                }
+            }
+        }
+        reply.setValue(values);
+    }
+
+    /**
+     * Handle get response and get data from block and/or update error status.
+     * 
+     * @param settings
+     *            DLMS settings.
+     * @param reply
+     *            Received data from the client.
+     * @param index
+     *            Block index number.
+     */
     static boolean handleGetResponse(final GXDLMSSettings settings,
             final GXReplyData reply, final int index) {
         long number;
@@ -2874,8 +2929,7 @@ abstract class GXDLMS {
             reply.getXml().appendStartTag(Command.GET_RESPONSE);
             reply.getXml().appendStartTag(Command.GET_RESPONSE, type);
             // InvokeIdAndPriority
-            reply.getXml().appendLine(TranslatorTags.INVOKE_ID, "Value",
-                    reply.getXml().integerToHex(ch, 2));
+            reply.getXml().appendInvokeId(ch);
         }
         // Response normal
         if (type == GetCommandType.NORMAL) {
@@ -2897,7 +2951,7 @@ abstract class GXDLMS {
                     reply.getXml().appendStartTag(TranslatorTags.DATA);
                     GXDataInfo di = new GXDataInfo();
                     di.setXml(reply.getXml());
-                    GXCommon.getData(reply.getData(), di);
+                    GXCommon.getData(settings, reply.getData(), di);
                     reply.getXml().appendEndTag(TranslatorTags.DATA);
                 }
             } else {
@@ -3005,42 +3059,14 @@ abstract class GXDLMS {
                     }
                 }
             }
+            if (reply.getMoreData() == RequestTypes.NONE && settings != null
+                    && settings.getCommand() == Command.GET_REQUEST
+                    && settings.getCommandType() == GetCommandType.WITH_LIST) {
+                handleGetResponseWithList(settings, reply);
+                ret = false;
+            }
         } else if (type == GetCommandType.WITH_LIST) {
-            // Get object count.
-            int cnt = GXCommon.getObjectCount(data);
-            Object[] values = new Object[cnt];
-            if (reply.getXml() != null) {
-                // Result start tag.
-                reply.getXml().appendStartTag(TranslatorTags.RESULT, "Qty",
-                        reply.getXml().integerToHex(cnt, 2));
-            }
-            for (int pos = 0; pos != cnt; ++pos) {
-                // Result
-                ch = data.getUInt8();
-                if (ch != 0) {
-                    reply.setError(data.getUInt8());
-                } else {
-                    if (reply.getXml() != null) {
-                        GXDataInfo di = new GXDataInfo();
-                        di.setXml(reply.getXml());
-                        // Data.
-                        reply.getXml().appendStartTag(Command.READ_RESPONSE,
-                                SingleReadResponse.DATA);
-                        GXCommon.getData(reply.getData(), di);
-                        reply.getXml().appendEndTag(Command.READ_RESPONSE,
-                                SingleReadResponse.DATA);
-                    } else {
-                        reply.setReadPosition(reply.getData().position());
-                        getValueFromData(settings, reply);
-                        reply.getData().position(reply.getReadPosition());
-                        if (values != null) {
-                            values[pos] = reply.getValue();
-                        }
-                        reply.setValue(null);
-                    }
-                }
-            }
-            reply.setValue(values);
+            handleGetResponseWithList(settings, reply);
             ret = false;
         } else {
             throw new IllegalArgumentException("Invalid Get response.");
@@ -3594,7 +3620,7 @@ abstract class GXDLMS {
         int index = data.position();
         data.position(reply.getReadPosition());
         try {
-            Object value = GXCommon.getData(data, info);
+            Object value = GXCommon.getData(settings, data, info);
             if (value != null) { // If new data.
                 if (!(value instanceof Object[])) {
                     reply.setValueType(info.getType());

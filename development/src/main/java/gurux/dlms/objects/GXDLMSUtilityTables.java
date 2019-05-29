@@ -45,20 +45,25 @@ import gurux.dlms.internal.GXCommon;
 
 /**
  * Online help:<br>
- * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSData
+ * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSUtilityTables
  */
-public class GXDLMSData extends GXDLMSObject implements IGXDLMSBase {
+public class GXDLMSUtilityTables extends GXDLMSObject implements IGXDLMSBase {
     /**
-     * Value of data object.<br>
+     * Table Id.<br>
      * Online help:<br>
-     * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSData
+     * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSUtilityTables
      */
-    private Object value;
+    private int tableId;
+
+    /**
+     * Contents of the table.
+     */
+    private byte[] buffer;
 
     /**
      * Constructor.
      */
-    public GXDLMSData() {
+    public GXDLMSUtilityTables() {
         this(null, 0);
     }
 
@@ -68,7 +73,7 @@ public class GXDLMSData extends GXDLMSObject implements IGXDLMSBase {
      * @param ln
      *            Logical Name of the object.
      */
-    public GXDLMSData(final String ln) {
+    public GXDLMSUtilityTables(final String ln) {
         this(ln, 0);
     }
 
@@ -80,34 +85,59 @@ public class GXDLMSData extends GXDLMSObject implements IGXDLMSBase {
      * @param sn
      *            Short Name of the object.
      */
-    public GXDLMSData(final String ln, final int sn) {
-        super(ObjectType.DATA, ln, sn);
+    public GXDLMSUtilityTables(final String ln, final int sn) {
+        super(ObjectType.UTILITY_TABLES, ln, sn);
     }
 
     /**
      * Online help:<br>
-     * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSData
+     * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSUtilityTables
      * 
-     * @return Value of data object.
+     * @return Table Id.
      */
-    public final Object getValue() {
-        return value;
+    public final int getTableId() {
+        return tableId;
     }
 
     /**
      * Online help:<br>
-     * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSData
+     * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSUtilityTables
      * 
-     * @param forValue
-     *            Value of data object.
+     * @param value
+     *            Table Id.
      */
-    public final void setValue(final Object forValue) {
-        value = forValue;
+    public final void setTableId(final int value) {
+        tableId = value;
+    }
+
+    /**
+     * Online help:<br>
+     * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSUtilityTables
+     * 
+     * @return Contents of the table.
+     */
+    public final byte[] getBuffer() {
+        return buffer;
+    }
+
+    /**
+     * Online help:<br>
+     * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSUtilityTables
+     * 
+     * @param value
+     *            Contents of the table.
+     */
+    public final void setBuffer(final byte[] value) {
+        buffer = value;
     }
 
     @Override
     public final Object[] getValues() {
-        return new Object[] { getLogicalName(), getValue() };
+        int len = 0;
+        if (buffer != null) {
+            len = buffer.length;
+        }
+        return new Object[] { getLogicalName(), len, buffer };
     }
 
     /*
@@ -123,9 +153,17 @@ public class GXDLMSData extends GXDLMSObject implements IGXDLMSBase {
                 || getLogicalName().compareTo("") == 0) {
             attributes.add(new Integer(1));
         }
-        // Value
+        // TableId
         if (all || canRead(2)) {
-            attributes.add(new Integer(2));
+            attributes.add(2);
+        }
+        // Length
+        if (all || canRead(3)) {
+            attributes.add(3);
+        }
+        // Buffer
+        if (all || canRead(4)) {
+            attributes.add(4);
         }
         return GXDLMSObjectHelpers.toIntArray(attributes);
     }
@@ -135,7 +173,7 @@ public class GXDLMSData extends GXDLMSObject implements IGXDLMSBase {
      */
     @Override
     public final int getAttributeCount() {
-        return 2;
+        return 4;
     }
 
     /*
@@ -148,14 +186,19 @@ public class GXDLMSData extends GXDLMSObject implements IGXDLMSBase {
 
     @Override
     public final DataType getDataType(final int index) {
-        if (index == 1) {
+        switch (index) {
+        case 1:
             return DataType.OCTET_STRING;
+        case 2:
+            return DataType.UINT16;
+        case 3:
+            return DataType.UINT32;
+        case 4:
+            return DataType.OCTET_STRING;
+        default:
+            throw new IllegalArgumentException(
+                    "getDataType failed. Invalid attribute index.");
         }
-        if (index == 2) {
-            return super.getDataType(index);
-        }
-        throw new IllegalArgumentException(
-                "getDataType failed. Invalid attribute index.");
     }
 
     /*
@@ -164,13 +207,19 @@ public class GXDLMSData extends GXDLMSObject implements IGXDLMSBase {
     @Override
     public final Object getValue(final GXDLMSSettings settings,
             final ValueEventArgs e) {
-        if (e.getIndex() == 1) {
+        switch (e.getIndex()) {
+        case 1:
             return GXCommon.logicalNameToBytes(getLogicalName());
+        case 2:
+            return tableId;
+        case 3:
+            return buffer == null ? 0 : buffer.length;
+        case 4:
+            return buffer;
+        default:
+            e.setError(ErrorCode.READ_WRITE_DENIED);
+            break;
         }
-        if (e.getIndex() == 2) {
-            return getValue();
-        }
-        e.setError(ErrorCode.READ_WRITE_DENIED);
         return null;
     }
 
@@ -180,28 +229,36 @@ public class GXDLMSData extends GXDLMSObject implements IGXDLMSBase {
     @Override
     public final void setValue(final GXDLMSSettings settings,
             final ValueEventArgs e) {
-        if (e.getIndex() == 1) {
+        switch (e.getIndex()) {
+        case 1:
             setLogicalName(GXCommon.toLogicalName(e.getValue()));
-        } else if (e.getIndex() == 2) {
-            setValue(e.getValue());
-        } else {
+            break;
+        case 2:
+            tableId = ((Number) e.getValue()).intValue();
+            break;
+        case 3:
+            // Skip len.
+            break;
+        case 4:
+            buffer = (byte[]) e.getValue();
+            break;
+        default:
             e.setError(ErrorCode.READ_WRITE_DENIED);
+            break;
         }
     }
 
     @Override
     public final void load(final GXXmlReader reader) throws XMLStreamException {
-        value = reader.readElementContentAsObject("Value", null);
+        tableId = reader.readElementContentAsInt("Value", 0);
+        buffer = GXCommon
+                .hexToBytes(reader.readElementContentAsString("Value", null));
     }
 
     @Override
     public final void save(final GXXmlWriter writer) throws XMLStreamException {
-        if (value instanceof String) {
-            writer.writeElementObject("Value", value, getDataType(2),
-                    getUIDataType(2));
-        } else {
-            writer.writeElementObject("Value", value);
-        }
+        writer.writeElementString("Id", tableId);
+        writer.writeElementString("Buffer", GXCommon.toHex(buffer, true));
     }
 
     @Override

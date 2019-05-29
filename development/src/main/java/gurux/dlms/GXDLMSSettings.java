@@ -26,7 +26,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 // See the GNU General Public License for more details.
 //
-// More information of Gurux products: http://www.gurux.org
+// More information of Gurux products: https://www.gurux.org
 //
 // This code is licensed under the GNU General Public License v2. 
 // Full text may be retrieved at http://www.gnu.org/licenses/gpl-2.0.txt
@@ -282,6 +282,16 @@ public class GXDLMSSettings {
     private boolean useUtc2NormalTime;
 
     private Standard standard;
+
+    /**
+     * Last executed command.
+     */
+    private int command;
+
+    /**
+     * Last executed command type
+     */
+    private byte commandType;
 
     /**
      * Protocol version.
@@ -852,7 +862,7 @@ public class GXDLMSSettings {
      *            Invoke ID.
      */
     public final void setLongInvokeID(final long value) {
-        if (value > 0xFFFFFF) {
+        if (value < 0) {
             throw new IllegalArgumentException("Invalid InvokeID");
         }
         longInvokeID = value;
@@ -1133,5 +1143,35 @@ public class GXDLMSSettings {
      */
     public void setPreEstablishedSystemTitle(final byte[] value) {
         preEstablishedSystemTitle = value;
+    }
+
+    /**
+     * @return the command
+     */
+    public int getCommand() {
+        return command;
+    }
+
+    /**
+     * @param value
+     *            the command to set
+     */
+    public void setCommand(final int value) {
+        command = value;
+    }
+
+    /**
+     * @return the commandType
+     */
+    public byte getCommandType() {
+        return commandType;
+    }
+
+    /**
+     * @param value
+     *            the commandType to set
+     */
+    public void setCommandType(final byte value) {
+        commandType = value;
     }
 }

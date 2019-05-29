@@ -26,7 +26,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
 // See the GNU General Public License for more details.
 //
-// More information of Gurux products: http://www.gurux.org
+// More information of Gurux products: https://www.gurux.org
 //
 // This code is licensed under the GNU General Public License v2. 
 // Full text may be retrieved at http://www.gnu.org/licenses/gpl-2.0.txt
@@ -57,7 +57,7 @@ import gurux.dlms.objects.enums.ClockBase;
 
 /**
  * Online help: <br>
- * http://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSClock
+ * https://www.gurux.fi/Gurux.DLMS.Objects.GXDLMSClock
  */
 public class GXDLMSClock extends GXDLMSObject implements IGXDLMSBase {
     private ClockBase clockBase;
@@ -243,9 +243,8 @@ public class GXDLMSClock extends GXDLMSObject implements IGXDLMSBase {
 
     @Override
     public final Object[] getValues() {
-        return new Object[] { getLogicalName(), getTime(),
-                new Integer(getTimeZone()), getStatus(), getBegin(), getEnd(),
-                new Integer(getDeviation()), new Boolean(getEnabled()),
+        return new Object[] { getLogicalName(), getTime(), getTimeZone(),
+                getStatus(), getBegin(), getEnd(), getDeviation(), getEnabled(),
                 getClockBase() };
     }
 
@@ -400,9 +399,11 @@ public class GXDLMSClock extends GXDLMSObject implements IGXDLMSBase {
         GXByteBuffer buff = new GXByteBuffer(44);
         buff.setUInt8(DataType.STRUCTURE.getValue());
         buff.setUInt8(3);
-        GXCommon.setData(buff, DataType.OCTET_STRING, presetTime);
-        GXCommon.setData(buff, DataType.OCTET_STRING, validityIntervalStart);
-        GXCommon.setData(buff, DataType.OCTET_STRING, validityIntervalEnd);
+        GXCommon.setData(null, buff, DataType.OCTET_STRING, presetTime);
+        GXCommon.setData(null, buff, DataType.OCTET_STRING,
+                validityIntervalStart);
+        GXCommon.setData(null, buff, DataType.OCTET_STRING,
+                validityIntervalEnd);
         return client.method(this, 5, buff.array(), DataType.ARRAY);
     }
 
@@ -428,39 +429,39 @@ public class GXDLMSClock extends GXDLMSObject implements IGXDLMSBase {
         // LN is static and read only once.
         if (all || getLogicalName() == null
                 || getLogicalName().compareTo("") == 0) {
-            attributes.add(new Integer(1));
+            attributes.add(1);
         }
         // Time
         if (all || canRead(2)) {
-            attributes.add(new Integer(2));
+            attributes.add(2);
         }
         // TimeZone
         if (all || !isRead(3)) {
-            attributes.add(new Integer(3));
+            attributes.add(3);
         }
         // Status
         if (all || canRead(4)) {
-            attributes.add(new Integer(4));
+            attributes.add(4);
         }
         // Begin
         if (all || !isRead(5)) {
-            attributes.add(new Integer(5));
+            attributes.add(5);
         }
         // End
         if (all || !isRead(6)) {
-            attributes.add(new Integer(6));
+            attributes.add(6);
         }
         // Deviation
         if (all || !isRead(7)) {
-            attributes.add(new Integer(7));
+            attributes.add(7);
         }
         // Enabled
         if (all || !isRead(8)) {
-            attributes.add(new Integer(8));
+            attributes.add(8);
         }
         // ClockBase
         if (all || !isRead(9)) {
-            attributes.add(new Integer(9));
+            attributes.add(9);
         }
         return GXDLMSObjectHelpers.toIntArray(attributes);
     }
@@ -520,19 +521,19 @@ public class GXDLMSClock extends GXDLMSObject implements IGXDLMSBase {
         case 2:
             return getTime();
         case 3:
-            return new Integer(getTimeZone());
+            return getTimeZone();
         case 4:
-            return new Integer(ClockStatus.toInteger(status));
+            return ClockStatus.toInteger(status);
         case 5:
             return getBegin();
         case 6:
             return getEnd();
         case 7:
-            return new Integer(getDeviation());
+            return getDeviation();
         case 8:
-            return new Boolean(getEnabled());
+            return getEnabled();
         case 9:
-            return new Integer(getClockBase().ordinal());
+            return getClockBase().ordinal();
         default:
             e.setError(ErrorCode.READ_WRITE_DENIED);
             break;
