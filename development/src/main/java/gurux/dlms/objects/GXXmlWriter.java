@@ -156,9 +156,8 @@ public class GXXmlWriter implements AutoCloseable {
 
     public final void writeElementString(final String name, final long value)
             throws XMLStreamException {
-        if (value != 0) {
-            writeElementString(name, String.valueOf(value));
-        }
+        writeElementString(name, String.valueOf(value));
+
     }
 
     public final void writeElementString(final String name, final double value)
@@ -175,9 +174,7 @@ public class GXXmlWriter implements AutoCloseable {
 
     public final void writeElementString(final String name, final int value)
             throws XMLStreamException {
-        if (value != 0) {
-            writeElementString(name, String.valueOf(value));
-        }
+        writeElementString(name, String.valueOf(value));
     }
 
     public final void writeElementString(final String name, final String value)
@@ -195,6 +192,8 @@ public class GXXmlWriter implements AutoCloseable {
             throws XMLStreamException {
         if (value) {
             writeElementString(name, "1");
+        } else {
+            writeElementString(name, "0");
         }
     }
 
